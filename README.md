@@ -62,7 +62,7 @@ Start training with default parameters:
 ```bash
 python main.py --dataset cifar100 \
                --batch_size 64 \
-               --num_epochs 35 \
+               --num_epochs 60 \
                --lr 0.1 \
                --weight_decay 5e-4 \
                --output_dir ./results
