@@ -7,7 +7,7 @@ import os
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec, GridSpecFromSubplotSpec  # 布局相关导入
+from matplotlib.gridspec import GridSpec, GridSpecFromSubplotSpec  # Imports related to layout
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.metrics import roc_curve, auc
@@ -81,7 +81,7 @@ def parse_args():
     # Training parameters
     parser.add_argument("--batch_size", type=int, default=64,
                         help="Batch size for training")
-    parser.add_argument("--num_epochs", type=int, default=35,
+    parser.add_argument("--num_epochs", type=int, default=60,
                         help="Number of training epochs")
     parser.add_argument("--lr", type=float, default=0.1,
                         help="Learning rate")
@@ -251,54 +251,54 @@ def train(args, model: nn.Module):
 
     return model, best_val_loss
 
-# 自定义混淆矩阵绘制函数（解决colorbar问题）
+# Custom confusion matrix plotting function (fixes colorbar issue)
 def plot_custom_confusion_matrix(y_true, y_pred, class_names):
     cm = confusion_matrix(y_true, y_pred)
-    # 归一化（便于观察）
+    # Normalization (for better visualization)
     cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
     
-    # 绘制热力图并返回im对象（给colorbar用）
+    # Plot heatmap and return im object (for colorbar usage)
     im = plt.imshow(cm_normalized, interpolation='nearest', cmap=plt.cm.Blues)
     
-    # 添加类别标签
+    # Add class labels
     tick_marks = np.arange(len(class_names))
     plt.xticks(tick_marks, class_names, rotation=90, fontsize=6)
     plt.yticks(tick_marks, class_names, fontsize=6)
     
-    # 设置标签
+    # Set labels
     plt.xlabel('Predicted Label', fontsize=8)
     plt.ylabel('True Label', fontsize=8)
     
     return im
 
-# 自定义ROC曲线绘制函数（返回图例的handles和labels）
+# Custom ROC curve plotting function (returns legend handles and labels)
 def plot_custom_roc_curves(ax, y_true, y_probs, class_names):
-    # 二值化标签（One-vs-Rest）
+    # Binarize labels (One-vs-Rest)
     lb = LabelBinarizer()
     y_true_bin = lb.fit_transform(y_true)
     n_classes = y_true_bin.shape[1]
     
-    # 计算每个类的ROC曲线和AUC
+    # Calculate ROC curve and AUC for each class
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
-    handles = []  # 存储曲线的图例句柄
-    labels = []   # 存储曲线的图例文本
+    handles = []  # Store curve legend handles
+    labels = []   # Store curve legend labels
     
     for i in range(n_classes):
         fpr[i], tpr[i], _ = roc_curve(y_true_bin[:, i], y_probs[:, i])
         roc_auc[i] = auc(fpr[i], tpr[i])
-        # 绘制曲线并收集句柄和标签
+        # Plot curve and collect handles and labels
         curve_handle, = ax.plot(fpr[i], tpr[i], lw=0.5)
         handles.append(curve_handle)
         labels.append(f'{class_names[i]} (AUC = {roc_auc[i]:.2f})')
     
-    # 绘制随机猜测的参考线
+    # Plot reference line for random guess
     rand_handle, = ax.plot([0, 1], [0, 1], 'k--', lw=1)
     handles.append(rand_handle)
     labels.append('Random Guess (AUC = 0.50)')
     
-    # 设置坐标轴
+    # Set axis
     ax.set_xlim([0.0, 1.0])
     ax.set_ylim([0.0, 1.05])
     ax.set_xlabel('False Positive Rate', fontsize=8)
@@ -331,20 +331,20 @@ def evaluate(args, model: nn.Module):
     # Define loss function
     criterion, _, _ = define_loss_and_optimizer(model, args.lr, args.weight_decay)
 
-    # Get evaluation results (核心：先备份变量，防止被修改)
+    # Get evaluation results (Core: Back up variables first to prevent modification)
     test_loss, test_accuracy, all_preds, all_labels, all_probs = evaluate_model(
         model, test_loader, criterion, args.device
     )
     
-    # 强制转换为numpy数组并备份，防止后续函数修改
+    # Force convert to numpy array and back up to prevent modification by subsequent functions
     all_labels_np = np.array(all_labels).flatten()
     all_preds_np = np.array(all_preds).flatten()
     all_probs_np = np.array(all_probs)
     
-    # 长度校验（关键修复）
+    # Length check (critical fix)
     print(f"Labels length: {len(all_labels_np)}, Predictions length: {len(all_preds_np)}")
     if len(all_labels_np) != len(all_preds_np):
-        # 截断到较短的长度（防止报错）
+        # Truncate to the shorter length (prevent errors)
         min_len = min(len(all_labels_np), len(all_preds_np))
         all_labels_np = all_labels_np[:min_len]
         all_preds_np = all_preds_np[:min_len]
@@ -371,14 +371,14 @@ def evaluate(args, model: nn.Module):
     with open(full_report_path, "a") as f:
         f.write(topk_str)
 
-    # -------------------------- 3. Confusion Matrix (修复colorbar + 样式优化) --------------------------
-    plt.figure(figsize=(25, 25))  # 适配CIFAR100的100类
+    # -------------------------- 3. Confusion Matrix (Fix colorbar + style optimization) --------------------------
+    plt.figure(figsize=(25, 25))  # Adapt to 100 classes of CIFAR100
     im = plot_custom_confusion_matrix(all_labels_np, all_preds_np, class_names)
     plt.title("Confusion Matrix (Normalized)", fontsize=12)
     
-    # 传入im对象创建colorbar
+    # Pass im object to create colorbar
     cbar = plt.colorbar(im, shrink=0.8, aspect=40)
-    cbar.ax.tick_params(labelsize=8)  # 调整颜色条字体
+    cbar.ax.tick_params(labelsize=8)  # Adjust colorbar font size
     
     plt.tight_layout()
     cm_path = os.path.join(results_dir, "confusion_matrix.png")
@@ -386,45 +386,45 @@ def evaluate(args, model: nn.Module):
     plt.close()
     print(f"Confusion Matrix saved to {cm_path}")
 
-    # -------------------------- 4. ROC Curves (终极紧凑：两列图例几乎重叠) --------------------------
-    fig = plt.figure(figsize=(20, 10))  # 极致窄画布，强制图例挤压
-    # 整体布局：曲线区占比更大，图例区更窄（4:1），强制紧凑
+    # -------------------------- 4. ROC Curves (Ultimate compactness: two columns of legends almost overlap) --------------------------
+    fig = plt.figure(figsize=(20, 10))  # Extremely narrow canvas to force legend compression
+    # Overall layout: larger proportion for curve area, narrower legend area (4:1) to force compactness
     gs_main = GridSpec(1, 2, width_ratios=[4, 1])
     
-    # 左列：ROC曲线（占大部分空间）
+    # Left column: ROC curves (occupies most space)
     ax_roc = fig.add_subplot(gs_main[0, 0])
     all_handles, all_labels_roc = plot_custom_roc_curves(ax_roc, all_labels_np, all_probs_np, class_names)
 
-    # 右列：拆分为1行2列，极致重叠（wspace=-0.3，深度重叠）
+    # Right column: split into 1 row and 2 columns with extreme overlap (wspace=-0.3, deep overlap)
     gs_legend = GridSpecFromSubplotSpec(1, 2, subplot_spec=gs_main[0, 1], wspace=-0.3)
     
-    # 右侧第一个子轴（左半图例）- 深度右移
+    # First sub-axis on the right (left half of legend) - deep right shift
     ax_legend_left = fig.add_subplot(gs_legend[0, 0])
     ax_legend_left.axis("off")
     ax_legend_left.legend(
         all_handles[:len(all_handles)//2],
         all_labels_roc[:len(all_labels_roc)//2],
         loc="center", fontsize="xx-small", ncol=1,
-        bbox_to_anchor=(1.5, 0.5),  # 极度右移，贴近右侧图例
-        frameon=False  # 去掉图例框，减少视觉间距
+        bbox_to_anchor=(1.5, 0.5),  # Extreme right shift, close to the right legend
+        frameon=False  # Remove legend frame to reduce visual spacing
     )
     
-    # 右侧第二个子轴（右半图例）- 深度左移
+    # Second sub-axis on the right (right half of legend) - deep left shift
     ax_legend_right = fig.add_subplot(gs_legend[0, 1])
     ax_legend_right.axis("off")
     ax_legend_right.legend(
         all_handles[len(all_handles)//2:],
         all_labels_roc[len(all_labels_roc)//2:],
         loc="center", fontsize="xx-small", ncol=1,
-        bbox_to_anchor=(-0.5, 0.5),  # 极度左移，贴近左侧图例
-        frameon=False  # 去掉图例框，减少视觉间距
+        bbox_to_anchor=(-0.5, 0.5),  # Extreme left shift, close to the left legend
+        frameon=False  # Remove legend frame to reduce visual spacing
     )
 
-    # 无任何边距，强制占满
+    # No margins at all, force to fill the canvas
     plt.tight_layout(pad=0, rect=[0, 0, 1, 1])
 
     roc_path = os.path.join(results_dir, "roc_curves.png")
-    plt.savefig(roc_path, bbox_inches=False, dpi=150)  # 关闭bbox_inches，进一步压缩
+    plt.savefig(roc_path, bbox_inches=False, dpi=150)  # Close bbox_inches to further compress
     plt.close()
     print(f"ROC Curves saved to {roc_path}")
 
@@ -477,10 +477,10 @@ def main():
         logger.info(f"  {arg}: {value}")
 
     # Collect data (uncomment to enable)
-    # collect_data(args)
+    collect_data(args)
     
     # Augment data (uncomment to enable)
-    # augment_data(args)
+    augment_data(args)
     
     # Build model
     model = build_model(args)
