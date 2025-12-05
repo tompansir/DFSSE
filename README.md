@@ -23,8 +23,8 @@
 
 1. Clone the Repository
 ```bash
-git clone https://github.com/tompansir/DFS_SE.git
-cd DFS_SE
+git clone https://github.com/tompansir/DFSSE.git
+cd DFSSE
 ```
 
 2. Install Dependencies
